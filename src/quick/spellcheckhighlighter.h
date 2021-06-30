@@ -63,7 +63,7 @@ class SpellcheckHighlighter : public QSyntaxHighlighter
     Q_PROPERTY(bool autoDetectLanguageDisabled READ autoDetectLanguageDisabled WRITE setAutoDetectLanguageDisabled NOTIFY autoDetectLanguageDisabledChanged)
 
 public:
-    SpellcheckHighlighter(QObject *parent = nullptr);
+    explicit SpellcheckHighlighter(QObject *parent = nullptr);
 
     /// Returns a list of suggested replacements for the given misspelled word.
     /// If the word is not misspelled, the list will be empty.

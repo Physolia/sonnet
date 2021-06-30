@@ -14,7 +14,6 @@
 #include "quick_debug.h"
 
 #include <QColor>
-#include <QDebug>
 #include <QHash>
 #include <QKeyEvent>
 #include <QMetaMethod>
@@ -107,7 +106,6 @@ public:
         errorFormat.setUnderlineColor(spellColor);
         errorFormat.setUnderlineStyle(QTextCharFormat::SingleUnderline);
         quoteFormat.setForeground(QColor{"#7f8c8d"});
-        qDebug() << "jrieojo";
     }
 
     ~HighlighterPrivate();
