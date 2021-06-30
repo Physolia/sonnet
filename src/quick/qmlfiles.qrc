@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+ <qresource prefix="/org/kde/ConfigView/">
+    <file>ConfigView.qml</file>
+ </qresource>
+</RCC>
