@@ -1,5 +1,5 @@
 <!DOCTYPE RCC><RCC version="1.0">
- <qresource prefix="/org/kde/ConfigView/">
+ <qresource prefix="/org/kde/sonnet/">
     <file>ConfigView.qml</file>
  </qresource>
 </RCC>

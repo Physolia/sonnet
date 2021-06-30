@@ -121,7 +121,7 @@ public:
     QTextCharFormat quoteFormat;
     std::unique_ptr<Sonnet::GuessLanguage> languageGuesser;
     QString selectedWord;
-    QQuickTextDocument *document;
+    QQuickTextDocument *document = nullptr;
     int cursorPosition;
     int selectionStart;
     int selectionEnd;

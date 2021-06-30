@@ -5,17 +5,93 @@
  */
 #include "settingsimpl_p.h"
 
+#include <QAbstractListModel>
 #include <QLocale>
 
 #include "loader_p.h"
 #include "settings.h"
+#include <QDebug>
+#include <speller.h>
 
 namespace Sonnet
 {
+class DictionaryModel : public QAbstractListModel
+{
+    Q_OBJECT
+public:
+    explicit DictionaryModel(QObject *parent = nullptr)
+        : QAbstractListModel(parent)
+    {
+        reload();
+    }
+
+    ~DictionaryModel()
+    {
+    }
+
+    void reload()
+    {
+        beginResetModel();
+        Sonnet::Speller speller;
+        m_preferredDictionaries = speller.preferredDictionaries();
+        m_availableDictionaries = speller.availableDictionaries();
+        QMapIterator<QString, QString> i(m_preferredDictionaries);
+        while (i.hasNext()) {
+            i.next();
+            m_availableDictionaries.remove(i.key());
+        }
+        endResetModel();
+    }
+
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        if (!index.isValid()) {
+            return {};
+        }
+
+        const bool inPreferredDictionaries = index.row() < m_preferredDictionaries.count();
+        const int row = inPreferredDictionaries ? index.row() : index.row() - m_preferredDictionaries.count();
+
+        switch (role) {
+        case Qt::DisplayRole:
+            return inPreferredDictionaries ? m_preferredDictionaries.keys().at(row) : m_availableDictionaries.keys().at(row);
+        case Settings::LanguageCodeRole:
+            return inPreferredDictionaries ? m_preferredDictionaries.values().at(row) : m_availableDictionaries.values().at(row);
+        case Qt::CheckStateRole:
+        case Settings::PreferredRole:
+            return inPreferredDictionaries;
+        case Settings::DefaultRole:
+            return data(index, Settings::LanguageCodeRole) == m_defaultDictionary;
+        }
+        return {};
+    }
+
+    int rowCount(const QModelIndex &parent) const override
+    {
+        Q_UNUSED(parent)
+        return m_preferredDictionaries.count() + m_availableDictionaries.count();
+    }
+
+    QHash<int, QByteArray> roleNames() const override
+    {
+        return {{Qt::DisplayRole, QByteArrayLiteral("display")},
+                {Qt::CheckStateRole, QByteArrayLiteral("checked")},
+                {Settings::PreferredRole, QByteArrayLiteral("isPreferred")},
+                {Settings::LanguageCodeRole, QByteArrayLiteral("languageCode")},
+                {Settings::DefaultRole, QByteArrayLiteral("isDefault")}};
+    }
+
+private:
+    QMap<QString, QString> m_preferredDictionaries;
+    QMap<QString, QString> m_availableDictionaries;
+    const QString m_defaultDictionary;
+};
+
 class SettingsPrivate
 {
 public:
     Loader *loader = nullptr;
+    DictionaryModel *dictionaryModel = nullptr;
 };
 
 Settings::Settings(QObject *parent)
@@ -32,7 +108,12 @@ Settings::~Settings()
 
 void Settings::setDefaultLanguage(const QString &lang)
 {
+    if (defaultLanguage() == lang) {
+        return;
+    }
     d->loader->settings()->setDefaultLanguage(lang);
+    Q_EMIT defaultLanguageChanged();
+    Q_EMIT modifiedChanged();
 }
 
 QString Settings::defaultLanguage() const
@@ -42,7 +123,12 @@ QString Settings::defaultLanguage() const
 
 void Settings::setPreferredLanguages(const QStringList &lang)
 {
+    if (preferredLanguages() == lang) {
+        return;
+    }
     d->loader->settings()->setPreferredLanguages(lang);
+    Q_EMIT preferredLanguagesChanged();
+    Q_EMIT modifiedChanged();
 }
 
 QStringList Settings::preferredLanguages() const
@@ -52,7 +138,12 @@ QStringList Settings::preferredLanguages() const
 
 void Settings::setDefaultClient(const QString &client)
 {
+    if (defaultClient() == client) {
+        return;
+    }
     d->loader->settings()->setDefaultClient(client);
+    Q_EMIT defaultClientChanged();
+    Q_EMIT modifiedChanged();
 }
 
 QString Settings::defaultClient() const
@@ -62,7 +153,12 @@ QString Settings::defaultClient() const
 
 void Settings::setSkipUppercase(bool skip)
 {
+    if (skipUppercase() == skip) {
+        return;
+    }
     d->loader->settings()->setCheckUppercase(!skip);
+    Q_EMIT skipUppercaseChanged();
+    Q_EMIT modifiedChanged();
 }
 
 bool Settings::skipUppercase() const
@@ -72,7 +168,12 @@ bool Settings::skipUppercase() const
 
 void Settings::setAutodetectLanguage(bool detect)
 {
+    if (autodetectLanguage() == detect) {
+        return;
+    }
     d->loader->settings()->setAutodetectLanguage(detect);
+    Q_EMIT autodetectLanguage();
+    Q_EMIT modifiedChanged();
 }
 
 bool Settings::autodetectLanguage() const
@@ -82,7 +183,12 @@ bool Settings::autodetectLanguage() const
 
 void Settings::setSkipRunTogether(bool skip)
 {
+    if (skipRunTogether() == skip) {
+        return;
+    }
     d->loader->settings()->setSkipRunTogether(skip);
+    Q_EMIT skipRunTogetherChanged();
+    Q_EMIT modifiedChanged();
 }
 
 bool Settings::skipRunTogether() const
@@ -92,7 +198,12 @@ bool Settings::skipRunTogether() const
 
 void Settings::setCheckerEnabledByDefault(bool check)
 {
+    if (checkerEnabledByDefault() == check) {
+        return;
+    }
     d->loader->settings()->setCheckerEnabledByDefault(check);
+    Q_EMIT checkerEnabledByDefaultChanged();
+    Q_EMIT modifiedChanged();
 }
 
 bool Settings::checkerEnabledByDefault() const
@@ -102,7 +213,12 @@ bool Settings::checkerEnabledByDefault() const
 
 void Settings::setBackgroundCheckerEnabled(bool enable)
 {
+    if (backgroundCheckerEnabled() == enable) {
+        return;
+    }
     d->loader->settings()->setBackgroundCheckerEnabled(enable);
+    Q_EMIT backgroundCheckerEnabledChanged();
+    Q_EMIT modifiedChanged();
 }
 
 bool Settings::backgroundCheckerEnabled() const
@@ -112,7 +228,12 @@ bool Settings::backgroundCheckerEnabled() const
 
 void Settings::setCurrentIgnoreList(const QStringList &ignores)
 {
+    if (currentIgnoreList() == ignores) {
+        return;
+    }
     d->loader->settings()->setCurrentIgnoreList(ignores);
+    Q_EMIT currentIgnoreListChanged();
+    Q_EMIT modifiedChanged();
 }
 
 QStringList Settings::currentIgnoreList() const
@@ -192,4 +313,17 @@ QStringList Settings::defaultPreferredLanguages()
 {
     return QStringList();
 }
+
+QObject *Settings::dictionaryModel()
+{
+    // Lazy loading
+    if (d->dictionaryModel) {
+        return d->dictionaryModel;
+    }
+
+    d->dictionaryModel = new DictionaryModel(this);
+    return d->dictionaryModel;
 }
+}
+
+#include "settings.moc"
