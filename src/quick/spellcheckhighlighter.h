@@ -33,7 +33,7 @@ class SpellcheckHighlighter : public QSyntaxHighlighter
     /// This property holds the current word under the mouse.
     Q_PROPERTY(QString wordUnderMouse READ wordUnderMouse NOTIFY wordUnderMouseChanged)
 
-    /// This property holds the spell color. By default, it's read.
+    /// This property holds the spell color. By default, it's red.
     Q_PROPERTY(QColor misspelledColor READ misspelledColor WRITE setMisspelledColor NOTIFY misspelledColorChanged)
 
     /// This property holds the current language used for spell checking.
@@ -155,21 +155,16 @@ protected:
     void setIntraWordEditing(bool editing);
 
 public Q_SLOTS:
-    /**
-     * Set language to use for spell checking.
-     *
-     * @param language the language code for the new language to use.
-     */
+    /// Set language to use for spell checking.
+    ///
+    /// \param language the language code for the new language to use.
+    ///
     void setCurrentLanguage(const QString &language);
 
-    /**
-     * Run auto detection, disabling spell checking if too many errors are found.
-     */
+    /// Run auto detection, disabling spell checking if too many errors are found.
     void slotAutoDetection();
 
-    /**
-     * Force a new highlighting.
-     */
+    /// Force a new highlighting.
     void slotRehighlight();
 
 private:

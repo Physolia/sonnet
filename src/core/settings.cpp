@@ -35,12 +35,35 @@ public:
         Sonnet::Speller speller;
         m_preferredDictionaries = speller.preferredDictionaries();
         m_availableDictionaries = speller.availableDictionaries();
-        QMapIterator<QString, QString> i(m_preferredDictionaries);
-        while (i.hasNext()) {
-            i.next();
-            m_availableDictionaries.remove(i.key());
-        }
         endResetModel();
+    }
+
+    void setDefaultLanguage(const QString &language)
+    {
+        m_defaultDictionary = language;
+        Q_EMIT dataChanged(index(0, 0), index(rowCount(QModelIndex()) - 1, 0), {Settings::DefaultRole});
+    }
+
+    bool setData(const QModelIndex &idx, const QVariant &value, int role = Qt::EditRole)
+    {
+        if (!idx.isValid()) {
+            return false;
+        }
+        if (role != Qt::CheckStateRole) {
+            return false;
+        }
+        const int row = idx.row();
+        const auto language = m_availableDictionaries.keys().at(row);
+        const auto inPreferredDictionaries = m_preferredDictionaries.contains(m_availableDictionaries.keys().at(row));
+
+        if (inPreferredDictionaries) {
+            m_preferredDictionaries.remove(language);
+        } else {
+            m_preferredDictionaries[language] = m_availableDictionaries.values().at(row);
+        }
+        qobject_cast<Settings *>(parent())->setPreferredLanguages(m_preferredDictionaries.values());
+        Q_EMIT dataChanged(index(row, 0), index(row, 0), {Qt::CheckStateRole});
+        return true;
     }
 
     QVariant data(const QModelIndex &index, int role) const override
@@ -48,18 +71,15 @@ public:
         if (!index.isValid()) {
             return {};
         }
-
-        const bool inPreferredDictionaries = index.row() < m_preferredDictionaries.count();
-        const int row = inPreferredDictionaries ? index.row() : index.row() - m_preferredDictionaries.count();
+        const int row = index.row();
 
         switch (role) {
         case Qt::DisplayRole:
-            return inPreferredDictionaries ? m_preferredDictionaries.keys().at(row) : m_availableDictionaries.keys().at(row);
+            return m_availableDictionaries.keys().at(row);
         case Settings::LanguageCodeRole:
-            return inPreferredDictionaries ? m_preferredDictionaries.values().at(row) : m_availableDictionaries.values().at(row);
+            return m_availableDictionaries.values().at(row);
         case Qt::CheckStateRole:
-        case Settings::PreferredRole:
-            return inPreferredDictionaries;
+            return m_preferredDictionaries.contains(m_availableDictionaries.keys().at(row));
         case Settings::DefaultRole:
             return data(index, Settings::LanguageCodeRole) == m_defaultDictionary;
         }
@@ -69,7 +89,7 @@ public:
     int rowCount(const QModelIndex &parent) const override
     {
         Q_UNUSED(parent)
-        return m_preferredDictionaries.count() + m_availableDictionaries.count();
+        return m_availableDictionaries.count();
     }
 
     QHash<int, QByteArray> roleNames() const override
@@ -84,7 +104,7 @@ public:
 private:
     QMap<QString, QString> m_preferredDictionaries;
     QMap<QString, QString> m_availableDictionaries;
-    const QString m_defaultDictionary;
+    QString m_defaultDictionary;
 };
 
 class SettingsPrivate
@@ -114,6 +134,10 @@ void Settings::setDefaultLanguage(const QString &lang)
     d->loader->settings()->setDefaultLanguage(lang);
     Q_EMIT defaultLanguageChanged();
     Q_EMIT modifiedChanged();
+
+    if (d->dictionaryModel) {
+        d->dictionaryModel->setDefaultLanguage(lang);
+    }
 }
 
 QString Settings::defaultLanguage() const
@@ -123,12 +147,11 @@ QString Settings::defaultLanguage() const
 
 void Settings::setPreferredLanguages(const QStringList &lang)
 {
-    if (preferredLanguages() == lang) {
+    if (!d->loader->settings()->setPreferredLanguages(lang)) {
         return;
     }
-    d->loader->settings()->setPreferredLanguages(lang);
-    Q_EMIT preferredLanguagesChanged();
     Q_EMIT modifiedChanged();
+    Q_EMIT preferredLanguagesChanged();
 }
 
 QStringList Settings::preferredLanguages() const
@@ -138,10 +161,9 @@ QStringList Settings::preferredLanguages() const
 
 void Settings::setDefaultClient(const QString &client)
 {
-    if (defaultClient() == client) {
+    if (!d->loader->settings()->setDefaultClient(client)) {
         return;
     }
-    d->loader->settings()->setDefaultClient(client);
     Q_EMIT defaultClientChanged();
     Q_EMIT modifiedChanged();
 }
@@ -153,10 +175,9 @@ QString Settings::defaultClient() const
 
 void Settings::setSkipUppercase(bool skip)
 {
-    if (skipUppercase() == skip) {
+    if (!d->loader->settings()->setCheckUppercase(!skip)) {
         return;
     }
-    d->loader->settings()->setCheckUppercase(!skip);
     Q_EMIT skipUppercaseChanged();
     Q_EMIT modifiedChanged();
 }
@@ -168,10 +189,9 @@ bool Settings::skipUppercase() const
 
 void Settings::setAutodetectLanguage(bool detect)
 {
-    if (autodetectLanguage() == detect) {
+    if (!d->loader->settings()->setAutodetectLanguage(detect)) {
         return;
     }
-    d->loader->settings()->setAutodetectLanguage(detect);
     Q_EMIT autodetectLanguage();
     Q_EMIT modifiedChanged();
 }
@@ -249,6 +269,7 @@ QStringList Settings::clients() const
 void Settings::save()
 {
     d->loader->settings()->save();
+    Q_EMIT modifiedChanged();
 }
 
 bool Settings::modified() const
@@ -322,6 +343,7 @@ QObject *Settings::dictionaryModel()
     }
 
     d->dictionaryModel = new DictionaryModel(this);
+    d->dictionaryModel->setDefaultLanguage(defaultLanguage());
     return d->dictionaryModel;
 }
 }
