@@ -12,6 +12,37 @@
 
 class HighlighterPrivate;
 
+/// \brief The Sonnet Highlighter class, used for drawing red lines in text fields
+/// when detecting spelling mistakes.
+///
+/// SpellcheckHighlighter is adapted for QML applications. In usual Kirigami/QQC2-desktop-style
+/// applications, this can be used directly by adding `Kirigami.SpellChecking.enabled: true` on
+/// a TextArea/TextField.
+///
+/// On other QML applications, you can add the SpellcheckHighlighter as a child of a TextArea/TextField.
+///
+/// \code
+/// TextArea {
+///     id: textArea
+///     Sonnet.SpellcheckHighlighter {
+///         id: spellcheckhighlighter
+///         document: textArea.textDocument
+///         cursorPosition: textArea.cursorPosition
+///         selectionStart: textArea.selectionStart
+///         selectionEnd: textArea.selectionEnd
+///         misspelledColor: Kirigami.Theme.negativeTextColor
+///         active: true
+///
+///         onChangeCursorPosition: {
+///             textArea.cursorPosition = start;
+///             textArea.moveCursorSelection(end, TextEdit.SelectCharacters);
+///         }
+///     }
+/// }
+/// \endcode
+///
+/// Additionally SpellcheckHighlighter provides some conveninent methods to create
+/// a context menu with suggestions. \see suggestions
 class SpellcheckHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
