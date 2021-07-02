@@ -85,7 +85,7 @@ Kirigami.Page {
             Layout.rightMargin: wideMode ? 0 : Kirigami.Units.largeSpacing
 
             QQC2.ComboBox {
-                Kirigami.FormData.label: i18n("Default language:")
+                Kirigami.FormData.label: i18n("Selected default language:")
                 model: settings.dictionaryModel
                 textRole: "display"
                 valueRole: "languageCode"
@@ -103,7 +103,7 @@ Kirigami.Page {
             QQC2.CheckBox {
                 Kirigami.FormData.label: i18n("Options:")
                 checked: settings.checkerEnabledByDefault
-                text: i18n("Automatic spell checking enabled by default")
+                text: i18n("Enable automatic spell checking")
                 onCheckedChanged: {
                     settings.checkerEnabledByDefault = checked;
                     if (instantApply) {
@@ -114,7 +114,7 @@ Kirigami.Page {
 
             QQC2.CheckBox {
                 checked: settings.skipUppercase
-                text: i18n("Skip all uppercase words")
+                text: i18n("Ignore uppercase words")
                 onCheckedChanged: {
                     settings.skipUppercase = checked;
                     if (instantApply) {
@@ -125,7 +125,7 @@ Kirigami.Page {
 
             QQC2.CheckBox {
                 checked: settings.skipRunTogether
-                text: i18n("Skip run-together words")
+                text: i18n("Ignore hyphenated words")
                 onCheckedChanged: {
                     settings.skipRunTogether = checked;
                     if (instantApply) {
@@ -137,7 +137,7 @@ Kirigami.Page {
             QQC2.CheckBox {
                 id: autodetectLanguageCheckbox
                 checked: settings.autodetectLanguage
-                text: i18n("Enable autodetection of language")
+                text: i18n("Detect language automatically")
                 onCheckedChanged: {
                     settings.autodetectLanguage = checked;
                     if (instantApply) {
