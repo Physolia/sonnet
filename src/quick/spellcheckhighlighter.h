@@ -43,6 +43,8 @@ class HighlighterPrivate;
 ///
 /// Additionally SpellcheckHighlighter provides some conveninent methods to create
 /// a context menu with suggestions. \see suggestions
+///
+/// @since 5.86
 class SpellcheckHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT

@@ -12,6 +12,8 @@
 
 #include "sonnetcore_export.h"
 
+class QAbstractListModel;
+
 namespace Sonnet
 {
 class Loader;
@@ -33,8 +35,8 @@ class SONNETCORE_EXPORT Settings : public QObject
     /// with language description and theirs codes. This model makes the
     /// Qt::DisplayRole as well as the roles defined in \ref DictionaryRoles
     /// available.
-    /// \since 5.85 TODO change to the next release version
-    Q_PROPERTY(QObject *dictionaryModel READ dictionaryModel CONSTANT)
+    /// \since 5.86
+    Q_PROPERTY(QAbstractListModel *dictionaryModel READ dictionaryModel CONSTANT)
 
     Q_PROPERTY(bool modified READ modified NOTIFY modifiedChanged)
 
@@ -79,7 +81,7 @@ public:
     QStringList clients() const;
     bool modified() const;
 
-    QObject *dictionaryModel();
+    QAbstractListModel *dictionaryModel();
 
     Q_INVOKABLE void save();
 

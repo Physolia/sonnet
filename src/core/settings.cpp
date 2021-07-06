@@ -44,7 +44,7 @@ public:
         Q_EMIT dataChanged(index(0, 0), index(rowCount(QModelIndex()) - 1, 0), {Settings::DefaultRole});
     }
 
-    bool setData(const QModelIndex &idx, const QVariant &value, int role = Qt::EditRole)
+    bool setData(const QModelIndex &idx, const QVariant &value, int role = Qt::EditRole) override
     {
         if (!idx.isValid()) {
             return false;
@@ -335,7 +335,7 @@ QStringList Settings::defaultPreferredLanguages()
     return QStringList();
 }
 
-QObject *Settings::dictionaryModel()
+QAbstractListModel *Settings::dictionaryModel()
 {
     // Lazy loading
     if (d->dictionaryModel) {
